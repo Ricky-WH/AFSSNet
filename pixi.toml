@@ -1,0 +1,16 @@
+[workspace]
+authors = ["RickyH <h19576027@gmail.com>"]
+channels = ["conda-forge"]
+name = "ours"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "3.12.*"
+
+[pypi-dependencies]
+torch = ">=2.9.0, <3"
+torchvision = ">=0.24.0, <0.25"
+opencv-python = ">=4.12.0.88, <5"

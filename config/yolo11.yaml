@@ -1,0 +1,53 @@
+# Parameters
+project: 'exps/yolov11/'
+adam: False
+epochs: 300
+weights: ''
+prune_finetune: False
+find_unused_parameters: True
+hyp:
+  lr0: 0.01
+  hsv_h: 0.015
+  hsv_s: 0.7
+  hsv_v: 0.4
+  lrf: 0.2
+  warmup_epochs: 3
+  no_aug_epochs: 30
+  mixup: 0.15
+  translate: 0.2
+  scale: 0.9
+
+Model:
+  depth_multiple: 0.25  
+  width_multiple: 0.5  
+  max_channels: 1024
+  Backbone: 
+    name: 'Yolo11'
+    activation: 'SiLU'
+  Neck: 
+    name: 'Yolo11' 
+    activation: 'SiLU'
+  Head: 
+    name: 'Yolo11'
+  anchors: [1] 
+Loss:
+  type: 'ComputeTalLoss'
+  use_dfl: True
+  use_gfl: False
+  reg_max: 16
+  qfl_loss_weight: 0.5
+  dfl_loss_weight: 1.5
+  box_loss_weight: 7.5
+
+Dataset:
+  data_name: 'DUT-Anti-UAV'
+  train: train.txt  # 118287 images
+  val: val.txt  # 5000 images
+  test: test.txt # 20288 of 40670 images, submit to https://competitions.codalab.org/competitions/20794^
+  nc: 1  # number of classes
+  np: 0 #number of keypoints
+  names: ['UAV']
+  img_size: 640
+  batch_size: 32
+  mosaic_prob: 0.5
+  mixup_prob: 0.15
