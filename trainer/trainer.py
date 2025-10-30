@@ -72,6 +72,9 @@ class Trainer:
         self.epochs = getattr(cfg, "epochs", 100)
         self.start_epoch = 0
         self.global_step = 0
+        hyp_cfg = getattr(cfg, "hyp", SimpleNamespace())
+        default_interval = getattr(hyp_cfg, "log_interval", 50)
+        self.log_interval = max(1, int(getattr(cfg, "log_interval", default_interval)))
 
         self.model = Yolo11(cfg).to(self.device)
         self.criterion = ComputeTalLoss(self.model, cfg)
@@ -156,6 +159,13 @@ class Trainer:
         return train_loader, val_loader
 
     def train(self) -> None:
+        print(
+            f"Starting training for {self.epochs} epochs on device {self.device}. "
+            f"Batches per epoch: {len(self.train_loader)}. Log interval: {self.log_interval}."
+        )
+        if self.val_loader is not None:
+            print(f"Validation enabled with {len(self.val_loader)} batches per epoch.")
+
         for epoch in range(self.start_epoch, self.epochs):
             train_log = self._train_one_epoch(epoch)
             self.scheduler.step()
@@ -180,6 +190,7 @@ class Trainer:
         cls_loss = 0.0
         box_loss = 0.0
         dfl_loss = 0.0
+        num_batches = len(self.train_loader)
 
         for step, (images, target_list) in enumerate(self.train_loader):
             images = images.to(self.device, non_blocking=True)
@@ -200,8 +211,16 @@ class Trainer:
             box_loss += float(loss_items["loss_iou"])
             dfl_loss += float(loss_items["loss_dfl"])
             self.global_step += 1
+            if (step == 0) or ((step + 1) % self.log_interval == 0) or (step + 1 == num_batches):
+                avg_loss = epoch_loss / (step + 1)
+                avg_cls = cls_loss / (step + 1)
+                avg_iou = box_loss / (step + 1)
+                avg_dfl = dfl_loss / (step + 1)
+                print(
+                    f"Epoch [{epoch + 1}/{self.epochs}] Step [{step + 1}/{num_batches}] "
+                    f"loss: {avg_loss:.4f} | cls: {avg_cls:.4f} | iou: {avg_iou:.4f} | dfl: {avg_dfl:.4f}"
+                )
 
-        num_batches = len(self.train_loader)
         return {
             "loss": epoch_loss / num_batches,
             "loss_cls": cls_loss / num_batches,
